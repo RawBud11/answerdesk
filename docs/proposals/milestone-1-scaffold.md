@@ -1,6 +1,7 @@
 # Proposal: Milestone 1 scaffold
 
-**Status: awaiting approval. Nothing in this proposal has been built.**
+**Status: Step 1 approved and implemented on 2026-10-07 (uv, Python 3.13, no GitHub
+remote yet). Later steps still need their own plans and approval.**
 
 This answers the Milestone 1 kickoff prompt (strategy, Section 9): the files, the
 dependencies and why, and the decisions needed before any code is written. Per
