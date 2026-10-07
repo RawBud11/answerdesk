@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          # Throwaway credentials for the CI-only database; not a secret.
+          POSTGRES_USER: answerdesk
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: answerdesk
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U answerdesk -d answerdesk"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql+psycopg://answerdesk:ci-only-password@127.0.0.1:5432/answerdesk
+      ENVIRONMENT: ci
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10
+        with:
+          version: "0.12.23"
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Check formatting
+        run: uv run ruff format --check .
+
+      - name: Type check
+        run: uv run mypy
+
+      - name: Apply migrations
+        run: uv run alembic upgrade head
+
+      - name: Tests
+        run: uv run pytest -q
+
+      - name: Check migrations can be reverted
+        run: uv run alembic downgrade base
